@@ -19,7 +19,7 @@ public:
 	/// </summary>
 	/// <param name="texture">A reference to the sprite sheet texture</param>
 	///< param name="wallSprites">A reference to the container of wall sprites</param>
-	TankAi(sf::Texture const & texture, std::vector<sf::Sprite> & wallSprites);
+	TankAi(sf::Texture const& texture, std::vector<sf::Sprite>& wallSprites);
 
 	/// <summary>
 	/// @brief Steers the AI tank towards the player tank avoiding obstacles along the way.
@@ -44,13 +44,19 @@ public:
 	/// @brief Initialises the obstacle container and sets the tank base/turret sprites to the specified position.
 	/// <param name="position">An x,y position</param>
 	/// </summary>
-	void init(sf::Vector2f position, GameState* t_gameStatePtr);
+	void init(sf::Vector2f position, GameState* t_gameStatePtr, sf::Vector2f t_patrolAreas[5]);
 
-	enum class AiType
+	enum class AiState
 	{
-		AI_ID_NONE,
-		AI_ID_SEEK_SHOOT_AT_PLAYER
+		PATROL_MAP,
+		ATTACK_PLAYER
 	};
+
+	AiState m_aiState;
+	sf::Vector2f m_patrolAreas[5];
+	sf::Vector2f m_currentPatrolArea;
+
+	void newPatrol();
 
 	sf::Sprite	getTankBase() const;
 	sf::Sprite  getTurret() const;

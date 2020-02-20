@@ -60,6 +60,13 @@ Game::Game()
 	{
 	}
 
+	aiPatrolAreas[0] = sf::Vector2f(100, 100);
+	aiPatrolAreas[1] = sf::Vector2f(100, 800);
+	aiPatrolAreas[2] = sf::Vector2f(1340, 100);
+	aiPatrolAreas[3] = sf::Vector2f(1340, 800);
+	aiPatrolAreas[4] = sf::Vector2f(720, 450);
+
+
 	m_clockText.setFont(m_clockFont);
 	m_clockText.setPosition(10, 10);
 	m_clockText.setOutlineColor(sf::Color::Black);
@@ -120,7 +127,7 @@ void Game::init()
 	m_tank.reset();
 	m_tank.passPtrs(m_targets, m_playerScorePtr, m_shotsFiredPtr, m_hitsMadePtr);
 
-	m_aiTank.init(m_level.m_aiTank.m_position, &m_gameState);
+	m_aiTank.init(m_level.m_aiTank.m_position, &m_gameState, aiPatrolAreas);
 }
 
 //--------------------------------------------------------------------

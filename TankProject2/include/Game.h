@@ -120,6 +120,8 @@ protected:
 
 	GameState m_gameState{ GameState::GAME_RUNNING };
 
+	sf::Vector2f aiPatrolAreas[5];
+
 	// The font to be used for the HUD.
 	sf::Font m_font;
 

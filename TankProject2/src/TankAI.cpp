@@ -26,62 +26,134 @@ void TankAi::update(Tank & playerTank, float dt)
 
 	if (*m_gameStatePtr == GameState::GAME_RUNNING)
 	{
-		vectorToPlayer = seek(playerTank);
 
-		switch (m_aiBehaviour)
+		if (m_aiState == AiState::PATROL_MAP)
 		{
-		case AiBehaviour::SEEK_PLAYER:
-			m_steering = sf::Vector2f(0, 0);
-			m_steering += thor::unitVector(vectorToPlayer);
-			m_steering += collisionAvoidance();
-			m_steering = MathUtility::truncate(m_steering, MAX_FORCE);
-			m_velocity = MathUtility::truncate(m_velocity + m_steering, MAX_SPEED);  //*7.0f * dt;
-			break;
-		case AiBehaviour::STOP:
-			m_velocity = sf::Vector2f(0, 0);
-			//motion->m_speed = 0;
-		default:
-			break;
+			vectorToPlayer = m_currentPatrolArea - m_tankBase.getPosition();
+
+			switch (m_aiBehaviour)
+			{
+			case AiBehaviour::SEEK_PLAYER:
+				m_steering = sf::Vector2f(0, 0);
+				m_steering += thor::unitVector(vectorToPlayer);
+				m_steering += collisionAvoidance();
+				m_steering = MathUtility::truncate(m_steering, MAX_FORCE);
+				m_velocity = MathUtility::truncate(m_velocity + m_steering, MAX_SPEED);  //*7.0f * dt;
+				break;
+
+			case AiBehaviour::STOP:
+				newPatrol();
+				break;
+
+			default:
+				break;
+			}
+
+
+			if (thor::length(vectorToPlayer) < MAX_SEE_AHEAD * .25f || stop == true)
+			{
+				m_aiBehaviour = AiBehaviour::STOP;
+			}
+			else
+			{
+				m_aiBehaviour = AiBehaviour::SEEK_PLAYER;
+			}
+
+			// Now we need to convert our velocity vector into a rotation angle between 0 and 359 degrees.
+			// The m_velocity vector works like this: vector(1,0) is 0 degrees, while vector(0, 1) is 90 degrees.
+			// So for example, 223 degrees would be a clockwise offset from 0 degrees (i.e. along x axis).
+			// Note: we add 180 degrees below to convert the final angle into a range 0 to 359 instead of -PI to +PI
+			auto dest = atan2(-1 * m_velocity.y, -1 * m_velocity.x) / thor::Pi * 180 + 180;
+
+			auto currentRotation = m_rotation;
+
+			// Find the shortest way to rotate towards the player (clockwise or anti-clockwise)
+			if (std::round(currentRotation - dest) == 0.0)
+			{
+				m_steering.x = 0;
+				m_steering.y = 0;
+			}
+
+			else if ((static_cast<int>(std::round(dest - currentRotation + 360))) % 360 < 180)
+			{
+				// rotate clockwise
+				m_rotation = static_cast<int>((m_rotation)+1) % 360;
+			}
+			else
+			{
+				// rotate anti-clockwise
+				m_rotation = static_cast<int>((m_rotation)-1) % 360;
+			}
+
 		}
-
-
-		if (thor::length(vectorToPlayer) < MAX_SEE_AHEAD * .25f || stop == true)
+		else if (m_aiState == AiState::ATTACK_PLAYER)
 		{
-			m_aiBehaviour = AiBehaviour::STOP;
-		}
-		else
-		{
-			m_aiBehaviour = AiBehaviour::SEEK_PLAYER;
-		}
+			vectorToPlayer = seek(playerTank);
 
-		// Now we need to convert our velocity vector into a rotation angle between 0 and 359 degrees.
-		// The m_velocity vector works like this: vector(1,0) is 0 degrees, while vector(0, 1) is 90 degrees.
-		// So for example, 223 degrees would be a clockwise offset from 0 degrees (i.e. along x axis).
-		// Note: we add 180 degrees below to convert the final angle into a range 0 to 359 instead of -PI to +PI
-		auto dest = atan2(-1 * m_velocity.y, -1 * m_velocity.x) / thor::Pi * 180 + 180;
+			switch (m_aiBehaviour)
+			{
+			case AiBehaviour::SEEK_PLAYER:
+				m_steering = sf::Vector2f(0, 0);
+				m_steering += thor::unitVector(vectorToPlayer);
+				m_steering += collisionAvoidance();
+				m_steering = MathUtility::truncate(m_steering, MAX_FORCE);
+				m_velocity = MathUtility::truncate(m_velocity + m_steering, MAX_SPEED);  //*7.0f * dt;
+				break;
+			case AiBehaviour::STOP:
+				m_velocity = sf::Vector2f(0, 0);
+				//motion->m_speed = 0;
+			default:
+				break;
+			}
 
-		auto currentRotation = m_rotation;
 
-		// Find the shortest way to rotate towards the player (clockwise or anti-clockwise)
-		if (std::round(currentRotation - dest) == 0.0)
-		{
-			m_steering.x = 0;
-			m_steering.y = 0;
+			if (thor::length(vectorToPlayer) < MAX_SEE_AHEAD * .25f || stop == true)
+			{
+				m_aiBehaviour = AiBehaviour::STOP;
+			}
+			else
+			{
+				m_aiBehaviour = AiBehaviour::SEEK_PLAYER;
+			}
+
+			// Now we need to convert our velocity vector into a rotation angle between 0 and 359 degrees.
+			// The m_velocity vector works like this: vector(1,0) is 0 degrees, while vector(0, 1) is 90 degrees.
+			// So for example, 223 degrees would be a clockwise offset from 0 degrees (i.e. along x axis).
+			// Note: we add 180 degrees below to convert the final angle into a range 0 to 359 instead of -PI to +PI
+			auto dest = atan2(-1 * m_velocity.y, -1 * m_velocity.x) / thor::Pi * 180 + 180;
+
+			auto currentRotation = m_rotation;
+
+			// Find the shortest way to rotate towards the player (clockwise or anti-clockwise)
+			if (std::round(currentRotation - dest) == 0.0)
+			{
+				m_steering.x = 0;
+				m_steering.y = 0;
+			}
+
+			else if ((static_cast<int>(std::round(dest - currentRotation + 360))) % 360 < 180)
+			{
+				// rotate clockwise
+				m_rotation = static_cast<int>((m_rotation)+1) % 360;
+			}
+			else
+			{
+				// rotate anti-clockwise
+				m_rotation = static_cast<int>((m_rotation)-1) % 360;
+			}
 		}
-
-		else if ((static_cast<int>(std::round(dest - currentRotation + 360))) % 360 < 180)
-		{
-			// rotate clockwise
-			m_rotation = static_cast<int>((m_rotation)+1) % 360;
-		}
-		else
-		{
-			// rotate anti-clockwise
-			m_rotation = static_cast<int>((m_rotation)-1) % 360;
-		}
-
-		//updateMovement(dt);
+		
+		updateMovement(dt);
 	}
+}
+//------------------------------------------------------------
+
+void TankAi::newPatrol()
+{
+	int newArea = rand() % 5;
+	m_currentPatrolArea = m_patrolAreas[newArea];
+	m_aiBehaviour = AiBehaviour::SEEK_PLAYER;
+	vectorToPlayer = m_currentPatrolArea - m_tankBase.getPosition();
 }
 
 //------------------------------------------------------------
@@ -186,13 +258,23 @@ void TankAi::render(sf::RenderWindow & window)
 
 //------------------------------------------------------------
 
-void TankAi::init(sf::Vector2f position, GameState* t_gameStatePtr)
+void TankAi::init(sf::Vector2f position, GameState* t_gameStatePtr, sf::Vector2f t_patrolAreas[5])
 {
+	for (int i{0}; i < 5; i++)
+	{
+		m_patrolAreas[i] = t_patrolAreas[i];
+		std::cout << m_patrolAreas[i].x << " , "<< m_patrolAreas[i].y << std::endl;
+	}
+
+	m_aiState = AiState::PATROL_MAP;
+
 	m_gameStatePtr = t_gameStatePtr;
 	m_tankBase.setPosition(position);
 	m_turret.setPosition(position);
 
 	m_health = 3;
+
+	newPatrol();
 
 	for (sf::Sprite const wallSprite : m_wallSprites)
 	{
@@ -219,12 +301,14 @@ void TankAi::initSprites()
 	sf::IntRect baseRect(103, 43, 79, 43);
 	m_tankBase.setTextureRect(baseRect);
 	m_tankBase.setOrigin(baseRect.width / 2.0, baseRect.height / 2.0);
+	m_tankBase.setScale(sf::Vector2f(.8,.8));
 
 	// Initialise the turret
 	m_turret.setTexture(m_texture);
 	sf::IntRect turretRect(122, 1, 83, 31);
 	m_turret.setTextureRect(turretRect);
 	m_turret.setOrigin(turretRect.width / 3.0, turretRect.height / 2.0);
+	m_turret.setScale(sf::Vector2f(.8, .8));
 }
 
 //------------------------------------------------------------

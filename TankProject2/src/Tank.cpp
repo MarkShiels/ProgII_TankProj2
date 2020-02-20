@@ -162,7 +162,7 @@ void Tank::initSprites()
 	sf::IntRect baseRect(2, 43, 79, 43);
 	m_tankBase.setTextureRect(baseRect);
 	m_tankBase.setOrigin(baseRect.width / 2.0, baseRect.height / 2.0);
-	//m_tankBase.setPosition(m_initPos);
+	m_tankBase.setScale(sf::Vector2f(.8, .8));
 
 	int pos = rand() % 4;
 
@@ -188,6 +188,7 @@ void Tank::initSprites()
 	m_turret.setTextureRect(turretRect);
 	m_turret.setOrigin(turretRect.width / 3.0, turretRect.height / 2.0);
 	m_turret.setPosition(m_tankBase.getPosition());
+	m_turret.setScale(sf::Vector2f(.8, .8));
 
 }
 
